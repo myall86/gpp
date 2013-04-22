@@ -29,8 +29,11 @@ help()
 {
 cat <<EOF
 gpp 0.1 commands: 
-
-  run              run the main method of a given class
+  
+  convert-emoticon    run the emoticon converter application (gpp.app.EmoticonConverter)
+  convert-stanford    run the Stanford converter application (gpp.app.StanfordConverter)
+  exp                 run the classifiction application (gpp.app.SentimentAnalysis)
+  run                 run the main method of a given class
 
 Include --help with any option for more information
 EOF
@@ -39,6 +42,9 @@ EOF
 CLASS=
 
 case $CMD in
+	convert-emoticon) CLASS=gpp.app.EmoticonConverter;;
+	convert-stanford) CLASS=gpp.app.StanfordConverter;;
+	exp) CLASS=gpp.app.SentimentAnalysis;;
     run) CLASS=$1; shift;;
     help) help; exit 1;;
     *) echo "Unrecognized command: $CMD"; help; exit 1;;
