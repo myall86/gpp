@@ -16,10 +16,9 @@ import gpp.classify._
 
 /**
  * A standalone object with a main method for reading an input file and running
- * k-means with different options.
+ * twitter polarity classification application with different options.
  */
 object SentimentAnalysis {
-	
 	
 
   def main(args: Array[String]) {
@@ -33,7 +32,10 @@ object SentimentAnalysis {
     
     // TODO
 	val GPP_DIR = System.getProperty("gpp.dir")
-	val evalLines = Source.fromFile(opts.evalfile()).getLines.toSeq
+	val evalLines = opts.evalfiles().flatMap { evalfile =>
+				Source.fromFile(evalfile).getLines.toSeq
+			}
+			.toSeq
 
 	val items = evalLines.filter(line => line.contains("<content>"))
 			.map(_.replaceAll("""<content>|</content>""", "").trim)
@@ -47,7 +49,7 @@ object SentimentAnalysis {
 
 	val predictedLabels = opts.method() match
 	{
-		case "majority" => MajorityMethod(opts.trainfiles(), opts.evalfile())
+		case "majority" => MajorityMethod(opts.trainfiles(), opts.evalfiles())
 		case "lexicon" => LexiconMethod(items)
 		case "L2R_LR" => LiblinearMethod(
 					opts.trainfiles(), 
@@ -67,14 +69,19 @@ object SentimentAnalysis {
 	println(confusionMatrix.toString)
   }
 
-	def MajorityMethod(trainfiles: List[String], evalfile: String): Seq[String] = 
+	/* Majority method */
+	def MajorityMethod(trainfiles: List[String], evalfiles: List[String]): Seq[String] = 
 	{
 		val trainLines = trainfiles.flatMap { trainfile =>
 				Source.fromFile(trainfile).getLines.toSeq
 			}
 			.toSeq
+
+		val evalLines = evalfiles.flatMap { evalfile =>
+				Source.fromFile(evalfile).getLines.toSeq
+			}
+			.toSeq
 		
-		val evalLines = Source.fromFile(evalfile).getLines.toSeq
 		val numPos = trainLines.count(line => line.contains("label=\"positive\""))
 		val numNeu = trainLines.count(line => line.contains("label=\"neutral\""))
 		val numNeg = trainLines.count(line => line.contains("label=\"negative\""))
@@ -87,11 +94,13 @@ object SentimentAnalysis {
 		predictedLabels
 	}
 
-	
-  def LexiconMethod(items: Seq[String]): Seq[String] = {
-	items.map(ExtendedFeatureExtractor.getPolarity)
-  }
+	/* Lexicon method */
+  	def LexiconMethod(items: Seq[String]): Seq[String] = 
+	{
+		items.map(ExtendedFeatureExtractor.getPolarity)
+  	}
 
+	/* Liblinear method */
   	def LiblinearMethod(
 		trainfiles: List[String], 
 		items: Seq[String], 
@@ -172,11 +181,13 @@ object SentimentAnalysisOpts {
   
   def apply(args: Array[String]) = new ScallopConf(args) {
     banner("""
+Classification application.
+
 For usage see below:
 	     """)
 
 	val trainfiles = opt[List[String]]("train", short='t', descr="The list of files containing training events.")
-	val evalfile = opt[String]("eval", short='e', descr="The file containing evalualation events.")
+	val evalfiles = opt[List[String]]("eval", short='e', descr="The file containing evalualation events.")
 	val solverTypes = Set("majority", "lexicon", "L2R_LR")
 
 	val method = opt[String]("method", short='m', default=Some("L2R_LR"), validate = solverTypes, 
@@ -188,6 +199,7 @@ For usage see below:
 	val extended = opt[Boolean]("extended", short = 'x', descr = "Use extended features.")
 	val detailed = opt[Boolean]("detailed", short = 'd')
 	val help = opt[Boolean]("help", noshort = true, descr="Show this message")
-	val verbose = opt[Boolean]("verbose")
+	val verbose = opt[Boolean]("verbose", short = 'v')
+	val version = opt[Boolean]("version", noshort = true, descr="Show version of this program")
   }
 }

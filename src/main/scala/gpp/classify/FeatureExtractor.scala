@@ -43,8 +43,9 @@ object ExtendedFeatureExtractor extends FeatureExtractor {
 
   override def apply(item: String): Seq[FeatureObservation[String]] = {
 
-	val polarity = getPolarity(item)
-	val emotion = getEmoticonPolarity(item)
+	val polarity = "polarity=" + getPolarity(item)
+
+	val emotion = "emoticon=" + getEmoticonPolarity(item)
 
 	val tokens = SimpleTokenizer(item).map(_.toLowerCase)
 
@@ -54,8 +55,18 @@ object ExtendedFeatureExtractor extends FeatureExtractor {
 	val bigrams = tokens.sliding(2).map(_.mkString(" "))
 
 	val trigrams = tokens.sliding(3).map(_.mkString(" "))
+/*
+	val loveRE = """l+o+v+e+""".r
+	val lovePattern = loveRE findFirstIn item.toLowerCase
+	val loveFeature = if (lovePattern != None) "lovePattern=yes" 
+			else ""
 
-	val features = wordFeatures ++ bigrams ++ trigrams ++ Seq[String](polarity, emotion) 
+	val hateRE = """h+a+t+e+""".r
+	val hatePattern = hateRE findFirstIn item.toLowerCase
+	val hateFeature = if (hatePattern != None) "hatePattern=yes" 
+			else ""
+*/
+	val features = wordFeatures ++ bigrams ++ trigrams ++ Seq[String](polarity, emotion)
 
 	features.map(descr=>FeatureObservation(descr))
   }
