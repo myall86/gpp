@@ -44,17 +44,22 @@ object SentimentAnalysis {
 				.map(line => 
 					if(line.contains("positive")) "positive"
 					else if(line.contains("neutral")) "neutral"
-					else "negative"
+					else if(line.contains("negative")) "negative"
+					else ""
 				)
+
+	val (filteredItems, filterGoldLabels) = items.zip(goldLabels)
+							.filterNot(_._2.isEmpty)
+							.unzip
 
 	val predictedLabels = opts.method() match
 	{
 		case "majority" => MajorityMethod(opts.trainfiles(), opts.evalfiles())
-		case "lexicon" => LexiconMethod(items)
+		case "lexicon" => LexiconMethod(filteredItems)
 		case "L2R_LR" => LiblinearMethod(
 					opts.trainfiles(), 
-					items, 
-					goldLabels, 
+					filteredItems, 
+					filterGoldLabels, 
 					opts.method(), 
 					opts.cost(), 
 					0.01, 
@@ -64,7 +69,7 @@ object SentimentAnalysis {
 		case _ => Seq[String]()
 	}
 	
-	val confusionMatrix = ConfusionMatrix(goldLabels, predictedLabels, items)
+	val confusionMatrix = ConfusionMatrix(filterGoldLabels, predictedLabels, filteredItems)
 	if(opts.detailed()) println(confusionMatrix.detailedOutput)
 	println(confusionMatrix.toString)
   }
@@ -90,7 +95,11 @@ object SentimentAnalysis {
 				.head
 				._1
 
-		val predictedLabels = evalLines.filter(line => line.contains("label=\"")).map(_ => majorLabel)
+		val predictedLabels = evalLines.filter(line => line.contains("label=\"positive\"") ||
+								line.contains("label=\"neutral\"") ||
+								line.contains("label=\"negative\"")
+							)
+						.map(_ => majorLabel)
 		predictedLabels
 	}
 
@@ -123,8 +132,13 @@ object SentimentAnalysis {
 					.map(line => 
 						if(line.contains("positive")) "positive"
 						else if(line.contains("neutral")) "neutral"
-						else "negative"
+						else if(line.contains("negative")) "negative"
+						else ""
 					)
+
+		val (filteredTrainItems, filterTrainLabels) = trainItems.zip(trainLabels)
+									.filterNot(_._2.isEmpty)
+									.unzip
 
 		// Choose the solver.
     		val solverType = nak.liblinear.Solver(method)
@@ -132,7 +146,7 @@ object SentimentAnalysis {
 		// Read and index the examples in the training file.
 		val indexer = new ExampleIndexer
 
-		val examples = trainItems.zip(trainLabels)
+		val examples = filteredTrainItems.zip(filterTrainLabels)
 					.map { case (trainItem, label) =>
 						val features = 
 							if (!extended) BasicFeatureExtractor(trainItem)
