@@ -30,7 +30,6 @@ object SentimentAnalysis {
     val logLevel = if (opts.verbose()) Level.DEBUG else Level.INFO
     Logger.getRootLogger.setLevel(logLevel)
     
-    // TODO
 	val GPP_DIR = System.getProperty("gpp.dir")
 	val evalLines = opts.evalfiles().flatMap { evalfile =>
 				Source.fromFile(evalfile).getLines.toSeq
