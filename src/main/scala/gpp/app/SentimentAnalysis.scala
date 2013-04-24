@@ -48,6 +48,7 @@ object SentimentAnalysis {
 					else ""
 				)
 
+	// Filter out irrelevant labels
 	val (filteredItems, filterGoldLabels) = items.zip(goldLabels)
 							.filterNot(_._2.isEmpty)
 							.unzip
@@ -136,6 +137,7 @@ object SentimentAnalysis {
 						else ""
 					)
 
+		// Filter out irrelevant labels
 		val (filteredTrainItems, filterTrainLabels) = trainItems.zip(trainLabels)
 									.filterNot(_._2.isEmpty)
 									.unzip
